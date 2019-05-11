@@ -95,6 +95,7 @@ public:
     EdgesIterator beginEdges();
     EdgesIterator endEdges();
 
+    vector<unsigned int> BFS(std::size_t index) const;
     vector<unsigned int> DFS(std::size_t index) const;
     unsigned findIndexOfVertice(const V &vertice);
     V getVertice(unsigned int idx) const { return vertices_[idx]; }
@@ -304,8 +305,10 @@ unsigned int Graph<V,E>::findIndexOfVertice(const V &vertice) {
     return 0;
 }
 
+// TRAVERSALS
+
 template <typename V, typename E>
-vector<unsigned int> Graph<V,E>::DFS(std::size_t index) const {
+vector<unsigned int> Graph<V,E>::BFS(std::size_t index) const {
     bool visited[vertices_.size()];
     memset(visited, false, sizeof(visited));
     vector<unsigned int> v;
@@ -325,5 +328,57 @@ vector<unsigned int> Graph<V,E>::DFS(std::size_t index) const {
             }
         }
     }
+
+    return v;
+}
+
+template <typename V, typename E>
+vector<unsigned int> Graph<V,E>::DFS(std::size_t index) const {
+    bool visited[vertices_.size()];
+    memset(visited, false, sizeof(visited));
+    vector<unsigned int> v;
+    stack<unsigned int> s;
+    v.push_back(index);
+    visited[index] = true;
+
+    while(v.size() != vertices_.size()) {
+
+        for(unsigned int i = v.size() - 1; i < v.size(); i++) {
+
+            //cout << vertices_[ v[i] ] << ", ";
+            bool go = false;
+
+            for(unsigned int j = 0; j < edges_.size(); j++) {
+
+                if(edges_[v[i]][j] && !visited[j]) {
+
+                    if(!go) {
+                        v.push_back(j);
+                        visited[j] = true;
+                        go = true;
+                    }
+
+                    if(go) {
+                        s.push(j);
+                    }
+                }
+            }
+        }
+
+        while(true) {
+            if(s.empty()) break;
+            if(visited[s.top()]) s.pop();
+            if(!s.empty()) {
+                if(!visited[s.top()]) break;
+            }
+        }
+
+        if(!s.empty()) {
+            v.push_back(s.top());
+            visited[s.top()] = true;
+            s.pop();
+        }
+    }
+
     return v;
 }
