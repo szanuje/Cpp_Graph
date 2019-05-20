@@ -15,6 +15,74 @@ template <typename V, typename E>
 class Graph
 {
 public:
+
+    // DFS IT
+
+    class IteratorDFS
+    {
+    private:
+        IteratorDFS(Graph<V, E> *graph, std::size_t curr_vector_idx);
+        IteratorDFS();
+
+    public:
+        IteratorDFS(const IteratorDFS&) = default;
+        IteratorDFS& operator=(const IteratorDFS&) = default;
+        IteratorDFS(IteratorDFS&&) = default;
+        IteratorDFS& operator=(IteratorDFS&&) = default;
+
+        friend class Graph<V, E>;
+
+    private:
+        Graph<V,E> *graph_ptr_;
+        unsigned int idx_;
+        vector<unsigned int> v;
+        vector<bool> visited;
+        unsigned int curr;
+        stack<unsigned int> s;
+
+    public:
+        bool operator==(const IteratorDFS &vi) const;
+        bool operator!=(const IteratorDFS &vi) const;
+        IteratorDFS& operator++();
+        IteratorDFS operator++(int);
+        V& operator*() const;
+        V* operator->() const;
+    };
+
+    // BFS IT
+
+    class IteratorBFS
+    {
+    private:
+        IteratorBFS(Graph<V, E> *graph, std::size_t curr_vector_idx);
+        IteratorBFS();
+
+    public:
+        IteratorBFS(const IteratorBFS&) = default;
+        IteratorBFS& operator=(const IteratorBFS&) = default;
+        IteratorBFS(IteratorBFS&&) = default;
+        IteratorBFS& operator=(IteratorBFS&&) = default;
+
+        friend class Graph<V, E>;
+
+    private:
+        Graph<V,E> *graph_ptr_;
+        unsigned int idx_;
+        vector<unsigned int> v;
+        vector<bool> visited;
+        unsigned int curr;
+
+    public:
+        bool operator==(const IteratorBFS &vi) const;
+        bool operator!=(const IteratorBFS &vi) const;
+        IteratorBFS& operator++();
+        IteratorBFS operator++(int);
+        V& operator*() const;
+        V* operator->() const;
+    };
+
+    // VERTICES IT
+
     class VerticesIterator
     {
     private:
@@ -40,6 +108,8 @@ public:
         V& operator*() const;
         V* operator->() const;
     };
+
+    // EDGES IT
 
     class EdgesIterator
     {
@@ -97,6 +167,13 @@ public:
 
     vector<unsigned int> BFS(std::size_t index) const;
     vector<unsigned int> DFS(std::size_t index) const;
+
+    IteratorBFS beginBFS(std::size_t index);
+    IteratorBFS endBFS();
+
+    IteratorDFS beginDFS(std::size_t index);
+    IteratorDFS endDFS();
+
     unsigned findIndexOfVertice(const V &vertice);
     V getVertice(unsigned int idx) const { return vertices_[idx]; }
 };
@@ -297,6 +374,7 @@ E* Graph<V,E>::EdgesIterator::operator->() const {
     return &graph_ptr_->edges_[Vidx_][Hidx_];
 }
 
+
 template <typename V, typename E>
 unsigned int Graph<V,E>::findIndexOfVertice(const V &vertice) {
     for(unsigned int i = 0; i < vertices_.size(); i++) {
@@ -341,19 +419,147 @@ vector<unsigned int> Graph<V,E>::DFS(std::size_t index) const {
     v.push_back(index);
     visited[index] = true;
 
-    while(v.size() != vertices_.size()) {
+    while(true) {
 
-        for(unsigned int i = v.size() - 1; i < v.size(); i++) {
+        while(true) {
 
+            unsigned int size_before = v.size();
+            unsigned int size_after = v.size();
             //cout << vertices_[ v[i] ] << ", ";
             bool go = false;
 
             for(unsigned int j = 0; j < edges_.size(); j++) {
 
-                if(edges_[v[i]][j] && !visited[j]) {
+                if(edges_[v[v.size() - 1]][j] && !visited[j]) {
 
                     if(!go) {
                         v.push_back(j);
+                        visited[j] = true;
+                        go = true;
+                        size_after++;
+                    }
+
+                    if(go) {
+                        s.push(j);
+                    }
+                }
+            }
+
+            if(size_before == size_after) break;
+        }
+
+        while(true) {
+            if(s.empty()) return v;
+            if(visited[s.top()]) s.pop();
+            if(!s.empty()) {
+                if(!visited[s.top()]) {
+                    v.push_back(s.top());
+                    visited[s.top()] = true;
+                    s.pop();
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// BFS IT
+
+template <typename V, typename E>
+Graph<V,E>::IteratorBFS::IteratorBFS(Graph<V, E> *graph, std::size_t curr_vector_idx) :
+    graph_ptr_(graph), curr(curr_vector_idx) {}
+
+template <typename V, typename E>
+bool Graph<V,E>::IteratorBFS::operator==(const IteratorBFS &vi) const { return this->curr == vi.curr; }
+
+template <typename V, typename E>
+bool Graph<V,E>::IteratorBFS::operator!=(const IteratorBFS &vi) const { return this->curr != vi.curr; }
+
+template <typename V, typename E>
+typename Graph<V,E>::IteratorBFS& Graph<V,E>::IteratorBFS::operator++() {
+
+    //cout << this->graph_ptr_->vertices_[ v[curr] ] << "x, ";
+
+    for(unsigned int j = 0; j < graph_ptr_->edges_.size(); j++) {
+
+        if(graph_ptr_->edges_[v[curr]][j] && !visited[j]) {
+            v.push_back(j);
+            visited[j] = true;
+
+        }
+    }
+
+    curr++;
+    if(curr < v.size()) {
+        idx_ = v[curr];
+    } else curr = this->graph_ptr_->vertices_.size();
+
+    return *this;
+}
+
+template <typename V, typename E>
+typename Graph<V,E>::IteratorBFS Graph<V,E>::IteratorBFS::operator++(int) {
+    IteratorBFS temp(*this);
+    ++(*this);
+    return temp;
+}
+
+template <typename V, typename E>
+V& Graph<V,E>::IteratorBFS::operator*() const {
+    return graph_ptr_->vertices_[idx_];
+}
+
+template <typename V, typename E>
+V* Graph<V,E>::IteratorBFS::operator->() const {
+    return &graph_ptr_->vertices_[idx_];
+}
+
+template <typename V, typename E>
+typename Graph<V,E>::IteratorBFS Graph<V,E>::beginBFS(std::size_t index) {
+    IteratorBFS b(this, 0);
+    b.visited.resize(vertices_.size(), false);
+    b.v.push_back(index);
+    b.idx_ = index;
+    b.visited[index] = true;
+    return b;
+}
+
+template <typename V, typename E>
+typename Graph<V,E>::IteratorBFS Graph<V,E>::endBFS() {
+    IteratorBFS b(this, vertices_.size());
+    return b;
+}
+
+// DFS IT
+
+template <typename V, typename E>
+Graph<V,E>::IteratorDFS::IteratorDFS(Graph<V, E> *graph, std::size_t curr_vector_idx) :
+    graph_ptr_(graph), curr(curr_vector_idx) {}
+
+template <typename V, typename E>
+bool Graph<V,E>::IteratorDFS::operator==(const IteratorDFS &vi) const { return this->curr == vi.curr; }
+
+template <typename V, typename E>
+bool Graph<V,E>::IteratorDFS::operator!=(const IteratorDFS &vi) const { return this->curr != vi.curr; }
+
+template <typename V, typename E>
+typename Graph<V,E>::IteratorDFS& Graph<V,E>::IteratorDFS::operator++() {
+
+    bool go = false;
+
+    bool repeat = true;
+    while(repeat) {
+        unsigned int status_before = v.size();
+        unsigned int status_after = v.size();
+
+        while(true) {
+            for(unsigned int j = 0; j < graph_ptr_->edges_.size(); j++) {
+
+                if(graph_ptr_->edges_[v[v.size() - 1]][j] && !visited[j]) {
+
+                    if(!go) {
+                        v.push_back(j);
+                        status_after++;
                         visited[j] = true;
                         go = true;
                     }
@@ -363,22 +569,73 @@ vector<unsigned int> Graph<V,E>::DFS(std::size_t index) const {
                     }
                 }
             }
-        }
 
-        while(true) {
-            if(s.empty()) break;
-            if(visited[s.top()]) s.pop();
-            if(!s.empty()) {
-                if(!visited[s.top()]) break;
+            if(status_before == status_after) {
+                break;
+            }
+            else {
+                curr++;
+                idx_ = v[curr];
+                return *this;
             }
         }
 
-        if(!s.empty()) {
-            v.push_back(s.top());
-            visited[s.top()] = true;
-            s.pop();
+        while(true) {
+            if(s.empty()) {
+                repeat = false;
+                curr = graph_ptr_->vertices_.size();
+                break;
+            }
+            if(visited[s.top()]) s.pop();
+
+            if(!s.empty()) {
+                if(!visited[s.top()]) {
+                    v.push_back(s.top());
+                    visited[s.top()] = true;
+                    s.pop();
+                    curr++;
+                    idx_ = v[curr];
+                    return *this;
+                }
+            }
         }
     }
 
-    return v;
+    curr++;
+    if(s.empty()) curr = graph_ptr_->vertices_.size();
+
+    return *this;
+}
+
+template <typename V, typename E>
+typename Graph<V,E>::IteratorDFS Graph<V,E>::IteratorDFS::operator++(int) {
+    IteratorDFS temp(*this);
+    ++(*this);
+    return temp;
+}
+
+template <typename V, typename E>
+V& Graph<V,E>::IteratorDFS::operator*() const {
+    return graph_ptr_->vertices_[idx_];
+}
+
+template <typename V, typename E>
+V* Graph<V,E>::IteratorDFS::operator->() const {
+    return &graph_ptr_->vertices_[idx_];
+}
+
+template <typename V, typename E>
+typename Graph<V,E>::IteratorDFS Graph<V,E>::beginDFS(std::size_t index) {
+    IteratorDFS b(this, 0);
+    b.visited.resize(vertices_.size(), false);
+    b.v.push_back(index);
+    b.idx_ = index;
+    b.visited[index] = true;
+    return b;
+}
+
+template <typename V, typename E>
+typename Graph<V,E>::IteratorDFS Graph<V,E>::endDFS() {
+    IteratorDFS b(this, vertices_.size());
+    return b;
 }

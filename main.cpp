@@ -7,7 +7,7 @@ using namespace std;
 template <typename V, typename E>
 void BFS(const Graph<V,E> &graph, std::size_t start_idx, std::function<void(const V&)> func) {
 
-    cout << "BFS: ";
+    cout << "BFS from " << start_idx << ":  ";
     vector<unsigned int> v = graph.BFS(start_idx);
     for(unsigned int i = 0; i < v.size(); i++) {
         func(graph.getVertice(v[i]));
@@ -17,7 +17,7 @@ void BFS(const Graph<V,E> &graph, std::size_t start_idx, std::function<void(cons
 template <typename V, typename E>
 void DFS(const Graph<V,E> &graph, std::size_t start_idx, std::function<void(const V&)> func) {
 
-    cout << "DFS: ";
+    cout << "DFS from " << start_idx << ":  ";
     vector<unsigned int> v = graph.DFS(start_idx);
     for(unsigned int i = 0; i < v.size(); i++) {
         func(graph.getVertice(v[i]));
@@ -69,17 +69,47 @@ int main()
 
     cout << endl << endl;
 
-    BFS<std::string, double>(g, 3u, [](const std::string &v) -> decltype(auto) {
-        std::cout << v << ", ";
-    });
+    for(unsigned int i = 0; i < 5; i++) {
+        DFS<std::string, double>(g, i, [](const std::string &v) -> decltype(auto) {
+            std::cout << v << ", ";
+        });
+        cout << endl;
+    }
 
     cout << endl;
 
-    DFS<std::string, double>(g, 3u, [](const std::string &v) -> decltype(auto) {
-        std::cout << v << ", ";
-    });
+    for(unsigned int i = 0; i < 5; i++) {
+        BFS<std::string, double>(g, i, [](const std::string &v) -> decltype(auto) {
+            std::cout << v << ", ";
+        });
+        cout << endl;
+    }
+
+    cout << endl;
+
+    for(unsigned int i = 0; i < 5; i++) {
+
+        cout << "IteratorDFS from " << i << ": ";
+        for(auto dfs_it = g.beginDFS(i); dfs_it != g.endDFS(); ++dfs_it)
+        {
+            std::cout << *dfs_it << ", ";
+        }
+        cout << endl;
+    }
+
+    cout << endl;
+
+    for(unsigned int i = 0; i < 5; i++) {
+
+        cout << "IteratorBFS from " << i << ": ";
+        for(auto bfs_it = g.beginBFS(i); bfs_it != g.endBFS(); ++bfs_it)
+        {
+            std::cout << *bfs_it << ", ";
+        }
+        cout << endl;
+    }
+
 
     cout << endl << endl;
-
     return 0;
 }
