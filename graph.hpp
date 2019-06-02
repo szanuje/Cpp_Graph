@@ -8,6 +8,9 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
+#include <map>
+#include <iomanip>
+#include <cmath>
 
 using namespace std;
 
@@ -34,11 +37,11 @@ public:
 
     private:
         Graph<V,E> *graph_ptr_;
-        unsigned int idx_;
-        vector<unsigned int> v;
+        std::size_t idx_;
+        vector<std::size_t> v;
         vector<bool> visited;
-        unsigned int curr;
-        stack<unsigned int> s;
+        std::size_t curr;
+        stack<std::size_t> s;
 
     public:
         bool operator==(const IteratorDFS &vi) const;
@@ -67,10 +70,10 @@ public:
 
     private:
         Graph<V,E> *graph_ptr_;
-        unsigned int idx_;
-        vector<unsigned int> v;
+        std::size_t idx_;
+        vector<std::size_t> v;
         vector<bool> visited;
-        unsigned int curr;
+        std::size_t curr;
 
     public:
         bool operator==(const IteratorBFS &vi) const;
@@ -98,7 +101,7 @@ public:
 
     private:
         Graph<V,E> *graph_ptr_;
-        unsigned int idx_;
+        std::size_t idx_;
 
     public:
         bool operator==(const VerticesIterator &vi) const;
@@ -126,8 +129,8 @@ public:
 
     private:
         Graph<V,E> *graph_ptr_;
-        unsigned int Vidx_;
-        unsigned int Hidx_;
+        std::size_t Vidx_;
+        std::size_t Hidx_;
 
     public:
         bool operator==(const EdgesIterator &ei) const;
@@ -165,8 +168,8 @@ public:
     EdgesIterator beginEdges();
     EdgesIterator endEdges();
 
-    vector<unsigned int> BFS(std::size_t index) const;
-    vector<unsigned int> DFS(std::size_t index) const;
+    vector<std::size_t> BFS(std::size_t index) const;
+    vector<std::size_t> DFS(std::size_t index) const;
 
     IteratorBFS beginBFS(std::size_t index);
     IteratorBFS endBFS();
@@ -174,8 +177,11 @@ public:
     IteratorDFS beginDFS(std::size_t index);
     IteratorDFS endDFS();
 
-    unsigned findIndexOfVertice(const V &vertice);
-    V getVertice(unsigned int idx) const { return vertices_[idx]; }
+    std::size_t findIndexOfVertice(const V &vertice);
+    V getVertice(std::size_t idx) const { return vertices_[idx]; }
+    double getDistance(std::size_t first, std::size_t second);
+
+    std::pair<double, vector<std::size_t>> dijkstra(std::size_t begin, std::size_t end);
 };
 
 template <typename V, typename E>
@@ -248,8 +254,8 @@ template <typename V, typename E>
 void Graph<V,E>::printNeighborhoodMatrix() const {
     for(const auto &e : edges_) {
         for(const auto &i : e) {
-            if(!i) cout << "0 ";
-            else cout << i.value() << " ";
+            if(!i) cout << left << setw(6) << "0 ";
+            else cout << left << setw(6) << i.value();
         }
         cout << endl;
     }
@@ -283,8 +289,8 @@ typename Graph<V,E>::VerticesIterator Graph<V,E>::endVertices() {
 
 template <typename V, typename E>
 typename Graph<V,E>::EdgesIterator Graph<V,E>::beginEdges() {
-    for(unsigned int i = 0; i < edges_.size(); i++) {
-        for(unsigned int j = 0; j < edges_.size(); j++) {
+    for(std::size_t i = 0; i < edges_.size(); i++) {
+        for(std::size_t j = 0; j < edges_.size(); j++) {
             if(edges_[i][j]) {
                 return EdgesIterator(this, i, j);
             }
@@ -376,8 +382,8 @@ E* Graph<V,E>::EdgesIterator::operator->() const {
 
 
 template <typename V, typename E>
-unsigned int Graph<V,E>::findIndexOfVertice(const V &vertice) {
-    for(unsigned int i = 0; i < vertices_.size(); i++) {
+std::size_t Graph<V,E>::findIndexOfVertice(const V &vertice) {
+    for(std::size_t i = 0; i < vertices_.size(); i++) {
         if(vertices_[i] == vertice) return i;
     }
     return 0;
@@ -386,18 +392,18 @@ unsigned int Graph<V,E>::findIndexOfVertice(const V &vertice) {
 // TRAVERSALS
 
 template <typename V, typename E>
-vector<unsigned int> Graph<V,E>::BFS(std::size_t index) const {
+vector<std::size_t> Graph<V,E>::BFS(std::size_t index) const {
     bool visited[vertices_.size()];
     memset(visited, false, sizeof(visited));
-    vector<unsigned int> v;
+    vector<std::size_t> v;
     v.push_back(index);
     visited[index] = true;
 
-    for(unsigned int i = 0; i < v.size(); i++){
+    for(std::size_t i = 0; i < v.size(); i++){
 
         //cout << vertices_[ v[i] ] << ", ";
 
-        for(unsigned int j = 0; j < edges_.size(); j++) {
+        for(std::size_t j = 0; j < edges_.size(); j++) {
 
             if(edges_[v[i]][j] && !visited[j]) {
                 v.push_back(j);
@@ -411,11 +417,11 @@ vector<unsigned int> Graph<V,E>::BFS(std::size_t index) const {
 }
 
 template <typename V, typename E>
-vector<unsigned int> Graph<V,E>::DFS(std::size_t index) const {
+vector<std::size_t> Graph<V,E>::DFS(std::size_t index) const {
     bool visited[vertices_.size()];
     memset(visited, false, sizeof(visited));
-    vector<unsigned int> v;
-    stack<unsigned int> s;
+    vector<std::size_t> v;
+    stack<std::size_t> s;
     v.push_back(index);
     visited[index] = true;
 
@@ -423,12 +429,12 @@ vector<unsigned int> Graph<V,E>::DFS(std::size_t index) const {
 
         while(true) {
 
-            unsigned int size_before = v.size();
-            unsigned int size_after = v.size();
+            std::size_t size_before = v.size();
+            std::size_t size_after = v.size();
             //cout << vertices_[ v[i] ] << ", ";
             bool go = false;
 
-            for(unsigned int j = 0; j < edges_.size(); j++) {
+            for(std::size_t j = 0; j < edges_.size(); j++) {
 
                 if(edges_[v[v.size() - 1]][j] && !visited[j]) {
 
@@ -480,7 +486,7 @@ typename Graph<V,E>::IteratorBFS& Graph<V,E>::IteratorBFS::operator++() {
 
     //cout << this->graph_ptr_->vertices_[ v[curr] ] << "x, ";
 
-    for(unsigned int j = 0; j < graph_ptr_->edges_.size(); j++) {
+    for(std::size_t j = 0; j < graph_ptr_->edges_.size(); j++) {
 
         if(graph_ptr_->edges_[v[curr]][j] && !visited[j]) {
             v.push_back(j);
@@ -549,11 +555,11 @@ typename Graph<V,E>::IteratorDFS& Graph<V,E>::IteratorDFS::operator++() {
 
     bool repeat = true;
     while(repeat) {
-        unsigned int status_before = v.size();
-        unsigned int status_after = v.size();
+        std::size_t status_before = v.size();
+        std::size_t status_after = v.size();
 
         while(true) {
-            for(unsigned int j = 0; j < graph_ptr_->edges_.size(); j++) {
+            for(std::size_t j = 0; j < graph_ptr_->edges_.size(); j++) {
 
                 if(graph_ptr_->edges_[v[v.size() - 1]][j] && !visited[j]) {
 
@@ -638,4 +644,84 @@ template <typename V, typename E>
 typename Graph<V,E>::IteratorDFS Graph<V,E>::endDFS() {
     IteratorDFS b(this, vertices_.size());
     return b;
+}
+
+template <typename V, typename E>
+double Graph<V,E>::getDistance(std::size_t first, std::size_t second){
+    return edges_[first][second];
+}
+
+// DIJKSTRA
+
+template <typename V, typename E>
+std::pair<double, vector<std::size_t>> Graph<V,E>::dijkstra(std::size_t begin, std::size_t end) {
+
+    vector<bool> visited;
+    visited.assign(vertices_.size(), false);
+
+    vector<double> sums;
+    for(std::size_t i = 0; i < vertices_.size(); i++) {
+        sums.push_back(std::numeric_limits<double>::infinity());
+    }
+
+    vector<std::size_t> result;
+    double sum = 0;
+
+    stack<std::size_t> remain;
+
+    remain.push(begin);
+    sums[begin] = 0;
+
+    while(!remain.empty()) {
+
+        visited[remain.top()] = true;
+        std::size_t current = remain.top();
+        remain.pop();
+
+        for(std::size_t i = 0; i < edges_.size(); i++) {
+            if(edges_[current][i] && !visited[i]) {
+                if(sums[current] + edges_[current][i].value() < sums[i]) {
+                    sums[i] = sums[current] + edges_[current][i].value();
+                }
+                remain.push(i);
+            }
+        }
+    }
+
+    if(isinf(sums[end])) {
+        return std::make_pair(0, result);
+    }
+
+    std::size_t lowest = begin;
+    visited.assign(visited.size(), false);
+
+    result.push_back(lowest);
+    visited[lowest] = true;
+
+    while(lowest != end) {
+
+        std::size_t current_lowest;
+        double current = std::numeric_limits<double>::infinity();
+
+        for(std::size_t i = 0; i < edges_.size(); i++) {
+            if(edges_[lowest][i] && !visited[i]) {
+                if(i == end) {
+                    current_lowest = i;
+                    break;
+                }
+                if(sums[i] < current) {
+                    current = sums[i];
+                    current_lowest = i;
+                }
+            }
+        }
+        lowest = current_lowest;
+        result.push_back(lowest);
+        visited[lowest] = true;
+
+    }
+
+    sum = sums[result[result.size() - 1]];
+
+    return std::make_pair(sum, result);
 }
